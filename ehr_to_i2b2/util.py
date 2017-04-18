@@ -8,7 +8,7 @@ def normalize_sex(sex):
 def compute_age(years=0, months=0):
     if months <= 0:
         return years
-    return years + 12.0/months
+    return years + months/12.0
 
 
 def find_type(val):

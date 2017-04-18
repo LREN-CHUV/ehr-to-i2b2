@@ -34,7 +34,7 @@ def process_clm(input_folder, i2b2_conn, dataset):
             concept_shortname = row['TEST_CODE']
             concept_cd = dataset + ":" + concept_shortname
             name_char = row['TEST_NAME']
-            concept_path = os.path.join("/", dataset, 'scores', concept_shortname)
+            concept_path = os.path.join("/", dataset, 'Scores', concept_shortname)
             i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
             val = row['TEST_VALUE']
             valtype_cd = util.find_type(val)
@@ -67,20 +67,34 @@ def process_clm(input_folder, i2b2_conn, dataset):
             subject_sex = util.normalize_sex(row['SEX'])
             i2b2_conn.save_patient(subject_num, sex_cd=subject_sex)
 
-    logging.info("Importing diagnostics (ICD-10 diagnostics, etc)...")
-    for diagcats_path in iglob(os.path.join(input_folder, '**/DiagCats_*.xls'), recursive=True):
-        data = read_excel(diagcats_path)
-        for _, row in data.iterrows():
-            pass
-            # TODO: implement
-
     logging.info("Importing diagnosis categories (diagnostics categories)...")
     for diagcats_path in iglob(os.path.join(input_folder, '**/DiagCats_*.xls'), recursive=True):
         data = read_excel(diagcats_path)
+        concept_path = os.path.join("/", dataset, "Diag Category")
+        concept_cd = dataset + ":diag_category"
+        name_char = "Diag Category"
+        i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
         for _, row in data.iterrows():
-            pass
-            # TODO: implement
+            patient_ide = row['SUBJECT_CODE']
+            patient_age = util.compute_age(row['SUBJ_AGE_YEARS'], row['SUBJ_AGE_MONTHS'])
+            diag = row['DIAG_CATEGORY']
+            patient_num = i2b2_conn.get_patient_num(patient_ide, dataset, dataset)
+            visits = i2b2_conn.db_session.query(i2b2_conn.VisitDimension.encounter_num).filter_by(
+                patient_num=patient_num, patient_age=patient_age).all()
+            for visit in visits:
+                encounter_num = visit[0]
+                start_date = DEFAULT_DATE
+                valtype_cd = util.find_type(diag)
+                if valtype_cd == 'N':
+                    tval_char = 'E'
+                    nval_num = float(diag)
+                else:
+                    tval_char = diag
+                    nval_num = None
+                i2b2_conn.save_observation(
+                    encounter_num, concept_cd, dataset, start_date, patient_num, valtype_cd, tval_char, nval_num)
 
+    # TODO: import diagnostics
     # TODO: import Morphobox
 
 
