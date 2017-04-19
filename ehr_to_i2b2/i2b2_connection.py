@@ -5,15 +5,10 @@ from sqlalchemy.sql import functions as sql_func
 
 from datetime import datetime
 
-from airflow import configuration
-
 
 class Connection:
 
-    def __init__(self, db_url=None):
-        if db_url is None:
-            db_url = configuration.get('data-factory', 'I2B2_SQL_ALCHEMY_CONN')
-
+    def __init__(self, db_url):
         self.Base = automap_base()
         self.engine = create_engine(db_url)
         self.Base.prepare(self.engine, reflect=True)

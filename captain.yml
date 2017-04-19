@@ -1,0 +1,7 @@
+ehr-to-i2b2:
+  build: Dockerfile
+  image: hbpmip/ehr-to-i2b2
+  pre:
+    - echo "Building hbpmip/ehr-to-i2b2 image"
+  post:
+    - echo "Finished building hbpmip/ehr-to-i2b2 image"

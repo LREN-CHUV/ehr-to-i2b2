@@ -1,3 +1,9 @@
+from datetime import datetime
+
+
+DEFAULT_DATE = datetime(1, 1, 1)
+
+
 def normalize_sex(sex):
     if sex.upper()[0] in ['H', 'M']:
         return 'M'

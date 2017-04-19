@@ -5,109 +5,15 @@ import argparse
 import os
 import sys
 
-from pandas import read_excel
-from glob import iglob
-from datetime import datetime
-
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from ehr_to_i2b2 import i2b2_connection
-from ehr_to_i2b2 import util
-
-
-DEFAULT_DATE = datetime(1, 1, 1)
-
-
-def process_clm(input_folder, i2b2_conn, dataset):
-    logging.info("Importing scores (neuropsychological scores)...")
-    for scores_path in iglob(os.path.join(input_folder, '**/Scores_*.xls'), recursive=True):
-        data = read_excel(scores_path)
-        for _, row in data.iterrows():
-            encounter_num = i2b2_conn.get_encounter_num(
-                row['EVENT_ID'], dataset, dataset, row['SUBJECT_ID'], dataset)
-            patient_num = i2b2_conn.get_patient_num(row['SUBJECT_ID'], dataset, dataset)
-            patient_age = util.compute_age(row['SUBJ_AGE_YEARS'], row['SUBJ_AGE_MONTHS'])
-            i2b2_conn.save_patient(patient_num)
-            i2b2_conn.save_visit(encounter_num, patient_num, patient_age=patient_age)
-            concept_shortname = row['TEST_CODE']
-            concept_cd = dataset + ":" + concept_shortname
-            name_char = row['TEST_NAME']
-            concept_path = os.path.join("/", dataset, 'Scores', concept_shortname)
-            i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
-            val = row['TEST_VALUE']
-            valtype_cd = util.find_type(val)
-            if valtype_cd == 'N':
-                tval_char = 'E'
-                nval_num = float(val)
-            else:
-                tval_char = val
-                nval_num = None
-            start_date = DEFAULT_DATE
-            i2b2_conn.save_observation(
-                encounter_num, concept_cd, dataset, start_date, patient_num, valtype_cd, tval_char, nval_num)
-
-    logging.info("Importing events (patient age at event time-point)...")
-    for events_path in iglob(os.path.join(input_folder, '**/Events_*.xls'), recursive=True):
-        data = read_excel(events_path)
-        for _, row in data.iterrows():
-            encounter_num = i2b2_conn.get_encounter_num(
-                row['ID_EVENT'], dataset, dataset, row['SUBJECT_CODE'], dataset)
-            patient_num = i2b2_conn.get_patient_num(row['SUBJECT_CODE'], dataset, dataset)
-            patient_age = util.compute_age(row['EVENT_SUBJ_AGE_YEARS'], row['EVENT_SUBJ_AGE_MONTHS'])
-            i2b2_conn.save_patient(patient_num)
-            i2b2_conn.save_visit(encounter_num, patient_num, patient_age=patient_age)
-
-    logging.info("Importing demographics (patient sex)...")
-    for demographics_path in iglob(os.path.join(input_folder, '**/Demographics_*.xls'), recursive=True):
-        data = read_excel(demographics_path)
-        for _, row in data.iterrows():
-            subject_num = i2b2_conn.get_patient_num(row['SUBJECT_CODE'], dataset, dataset)
-            subject_sex = util.normalize_sex(row['SEX'])
-            i2b2_conn.save_patient(subject_num, sex_cd=subject_sex)
-
-    logging.info("Importing diagnosis categories (diagnostics categories)...")
-    for diagcats_path in iglob(os.path.join(input_folder, '**/DiagCats_*.xls'), recursive=True):
-        data = read_excel(diagcats_path)
-        concept_path = os.path.join("/", dataset, "Diag Category")
-        concept_cd = dataset + ":diag_category"
-        name_char = "Diag Category"
-        i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
-        for _, row in data.iterrows():
-            patient_ide = row['SUBJECT_CODE']
-            patient_age = util.compute_age(row['SUBJ_AGE_YEARS'], row['SUBJ_AGE_MONTHS'])
-            diag = row['DIAG_CATEGORY']
-            patient_num = i2b2_conn.get_patient_num(patient_ide, dataset, dataset)
-            visits = i2b2_conn.db_session.query(i2b2_conn.VisitDimension.encounter_num).filter_by(
-                patient_num=patient_num, patient_age=patient_age).all()
-            for visit in visits:
-                encounter_num = visit[0]
-                start_date = DEFAULT_DATE
-                valtype_cd = util.find_type(diag)
-                if valtype_cd == 'N':
-                    tval_char = 'E'
-                    nval_num = float(diag)
-                else:
-                    tval_char = diag
-                    nval_num = None
-                i2b2_conn.save_observation(
-                    encounter_num, concept_cd, dataset, start_date, patient_num, valtype_cd, tval_char, nval_num)
-
-    # TODO: import diagnostics
-    # TODO: import Morphobox
-
-
-def process_edsd(input_folder, i2b2_conn, dataset):
-    logging.info("EHR importation for EDSD dataset is not available yet !")
-
-
-def process_adni(input_folder, i2b2_conn, dataset):
-    logging.info("EHR importation for ADNI dataset is not available yet !")
-
-
-def process_ppmi(input_folder, i2b2_conn, dataset):
-    logging.info("EHR importation for PPMI dataset is not available yet !")
+from ehr_to_i2b2 import clm_import
+from ehr_to_i2b2 import edsd_import
+from ehr_to_i2b2 import adni_import
+from ehr_to_i2b2 import ppmi_import
 
 
 def main(dataset, input_folder, i2b2_url):
@@ -115,13 +21,13 @@ def main(dataset, input_folder, i2b2_url):
     i2b2_conn = i2b2_connection.Connection(i2b2_url)
 
     if 'CLM' == dataset.upper():
-        process_clm(input_folder, i2b2_conn, dataset)
+        clm_import.process(input_folder, i2b2_conn, dataset)
     elif 'EDSD' == dataset.upper():
-        process_edsd(input_folder, i2b2_conn, dataset)
+        edsd_import.process(input_folder, i2b2_conn, dataset)
     elif 'ADNI' == dataset.upper():
-        process_edsd(input_folder, i2b2_conn, dataset)
+        adni_import.process(input_folder, i2b2_conn, dataset)
     elif 'PPMI' == dataset.upper():
-        process_edsd(input_folder, i2b2_conn, dataset)
+        ppmi_import.process(input_folder, i2b2_conn, dataset)
     else:
         logging.info("Unknown dataset !")
 
@@ -132,8 +38,8 @@ def main(dataset, input_folder, i2b2_url):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     args_parser = argparse.ArgumentParser()
-    args_parser.add_argument("dataset")
     args_parser.add_argument("input_folder")
     args_parser.add_argument("i2b2_url")
+    args_parser.add_argument("dataset")
     args = args_parser.parse_args()
     main(args.dataset, args.input_folder, args.i2b2_url)
