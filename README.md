@@ -9,4 +9,5 @@ This is a tool to import EHR (electronic health record) data into an I2B2 databa
 
 ## Usage
 
-main.py [-h] input_folder i2b2_url dataset
+Run:
+`docker run --rm -v <ehr_folder>:/input_folder hbpmip/ehr-to-i2b2:latest <db_url> <dataset>`
