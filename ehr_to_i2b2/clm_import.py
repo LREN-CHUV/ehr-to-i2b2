@@ -8,7 +8,7 @@ from . import util
 
 
 def process(input_folder, i2b2_conn, dataset):
-    logging.info("Importing scores (neuropsychological scores)...")
+    logging.info("Importing scores (neuropsychological scores, etc)...")
     import_scores(dataset, i2b2_conn, input_folder)
 
     logging.info("Importing events (patient age at event time-point)...")
@@ -17,11 +17,14 @@ def process(input_folder, i2b2_conn, dataset):
     logging.info("Importing demographics (patient sex)...")
     import_demographics(dataset, i2b2_conn, input_folder)
 
-    logging.info("Importing diagnosis categories (diagnostics categories)...")
+    logging.info("Importing diagnosis categories...")
     import_diagcat(dataset, i2b2_conn, input_folder)
 
-    # TODO: import diagnostics
-    # TODO: import Morphobox
+    logging.info("Importing ICD10 diagnosis...")
+    import_icd10(dataset, i2b2_conn, input_folder)
+
+    logging.info("Importing morphobox...")
+    import_morphobox(dataset, i2b2_conn, input_folder)
 
 
 def import_scores(dataset, i2b2_conn, input_folder):
@@ -37,7 +40,7 @@ def import_scores(dataset, i2b2_conn, input_folder):
             concept_shortname = row['TEST_CODE']
             concept_cd = dataset + ":" + concept_shortname
             name_char = row['TEST_NAME']
-            concept_path = os.path.join("/", dataset, 'Scores', concept_shortname)
+            concept_path = os.path.join("/", dataset, 'EHR', 'Scores', concept_shortname)
             i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
             val = row['TEST_VALUE']
             valtype_cd = util.find_type(val)
@@ -76,7 +79,7 @@ def import_demographics(dataset, i2b2_conn, input_folder):
 def import_diagcat(dataset, i2b2_conn, input_folder):
     for diagcats_path in iglob(os.path.join(input_folder, '**/DiagCats_*.xls'), recursive=True):
         data = read_excel(diagcats_path)
-        concept_path = os.path.join("/", dataset, "Diag Category")
+        concept_path = os.path.join("/", dataset, 'EHR', 'Diagnosis', 'Diag Category')
         concept_cd = dataset + ":diag_category"
         name_char = "Diag Category"
         i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
@@ -99,3 +102,25 @@ def import_diagcat(dataset, i2b2_conn, input_folder):
                     nval_num = None
                 i2b2_conn.save_observation(
                     encounter_num, concept_cd, dataset, start_date, patient_num, valtype_cd, tval_char, nval_num)
+
+
+def import_icd10(dataset, i2b2_conn, input_folder):
+    for diagnostics_path in iglob(os.path.join(input_folder, '**/Diagnostics_*.xls'), recursive=True):
+        data = read_excel(diagnostics_path)
+        for _, row in data.iterrows():
+            encounter_ide = row['ID_EVENT']
+            patient_ide = row['SUBJ_CODE']
+            icd10 = row['DIAG_ICD10']
+            # TODO: store fullname in lookup table -> icd10_fullname = row['DIAG_ICD10_FULL']
+            encounter_num = i2b2_conn.get_encounter_num(encounter_ide, dataset, dataset, patient_ide, dataset)
+            patient_num = i2b2_conn.get_patient_num(patient_ide, dataset, dataset)
+            concept_cd = dataset + ':icd10'
+            concept_path = os.path.join('/', dataset, 'EHR', 'Diagnosis', 'ICD10')
+            i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname="ICD 10")
+            i2b2_conn.save_observation(
+                encounter_num, concept_cd, dataset, util.DEFAULT_DATE, patient_num, 'T', icd10, None)
+
+
+def import_morphobox(dataset, i2b2_conn, input_folder):
+    logging.info("Not implemented yet...")
+    # TODO: implement it
