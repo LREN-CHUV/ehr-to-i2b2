@@ -5,6 +5,34 @@ from datetime import timedelta
 
 DEFAULT_DATE = datetime(1, 1, 1)
 INIT_MSFT_TIMESTAMP = datetime(year=1899, month=12, day=31)
+ITALIAN_MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+
+
+def normalize_date(date):
+    try:
+        return datetime.strptime(date, "%d-%b-%Y")
+    except ValueError:
+        pass
+    try:
+        return datetime.strptime(date, "%d/%m/%Y")
+    except ValueError:
+        pass
+    try:
+        return parse_custom_date(date, ITALIAN_MONTHS)
+    except ValueError:
+        pass
+    try:
+        return INIT_MSFT_TIMESTAMP + timedelta(int(date))
+    except ValueError:
+        pass
+
+    logging.warning("Cannot normalize date %s !", str(date))
+    return None
+
+
+def parse_custom_date(date, months):
+    pass
+# TODO: Implement this !!!
 
 
 def normalize_sex(sex):
@@ -27,21 +55,3 @@ def find_type(val):
         return 'N'
     except ValueError:
         return 'T'
-
-
-def normalize_date(date):
-    try:
-        return datetime.strptime(date, "%d-%b-%Y")
-    except ValueError:
-        pass
-    try:
-        return datetime.strptime(date, "%d/%m/%Y")
-    except ValueError:
-        pass
-    try:
-        return INIT_MSFT_TIMESTAMP + timedelta(int(date))
-    except ValueError:
-        pass
-
-    logging.warning("Cannot normalize date %s !", str(date))
-    return None
