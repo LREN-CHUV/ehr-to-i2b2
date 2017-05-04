@@ -12,6 +12,7 @@ def normalize_sex(sex):
         return 'M'
     elif sex.upper()[0] in ['F']:
         return 'F'
+    return None
 
 
 def compute_age(years=0, months=0):
