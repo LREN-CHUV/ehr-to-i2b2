@@ -39,19 +39,27 @@ def process(input_folder, i2b2_conn, dataset):
         if encounter_ide:
             logging.info("-> found visit %s", encounter_ide)
 
-            age = row['Age']
-            diagnosis = row['Diagnosis']
-            location = row['center']
+            try:
+                location = row['center']
+            except ValueError:
+                location = None
+            try:
+                diagnosis = row['Diagnosis']
+            except ValueError:
+                diagnosis = None
+            try:
+                age = float(row['Age'])
+            except ValueError:
+                age = None
             try:
                 mmse_score = row['MMSE_TOT']
             except ValueError:
-                logging.info("MMSE score not found for %s and visit %s", patient_ide, encounter_ide)
                 mmse_score = None
             try:
                 magnetic_field_strength = row['MagneticFieldStrength']
             except ValueError:
-                logging.info("Magnetic Field Strength not found for %s and visit %s", patient_ide, encounter_ide)
                 magnetic_field_strength = None
+
             encounter_num = i2b2_conn.get_encounter_num(encounter_ide, dataset, dataset, patient_ide, dataset)
             i2b2_conn.save_visit(
                 encounter_num, patient_num, patient_age=age, start_date=mri_date, location_cd=location)
@@ -93,5 +101,10 @@ def _find_visit(i2b2_conn, patient_num, mri_date):
         return i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
             filter_by(patient_num=patient_num).one_or_none()
     except MultipleResultsFound:
-        return i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
-            filter_by(patient_num=patient_num, start_date=mri_date).distinct().first()
+        encounter_num = None
+        if mri_date:
+            encounter_num = i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
+                filter_by(patient_num=patient_num, start_date=mri_date).first()
+        if not encounter_num:
+            return i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
+                filter_by(patient_num=patient_num).first()
