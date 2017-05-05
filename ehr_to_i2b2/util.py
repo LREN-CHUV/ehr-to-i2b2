@@ -32,13 +32,13 @@ def normalize_date(date):
 
 
 def parse_custom_date(date, months):
-    matches = re.fullmatch("([0-3][0-9])-([a-zA-Z]{3})-([0-9][0-9])", date)
+    matches = re.fullmatch("([0-3]?[0-9])-([a-zA-Z]{3})-([0-9][0-9])", date)
     try:
-        day = int(matches.group(1)) + 1900
+        day = int(matches.group(1))
         month = months.index(matches.group(2).lower()) + 1
-        year = int(matches.group(3))
+        year = int(matches.group(3)) + 1900
         return datetime(year, month, day)
-    except (IndexError, ValueError):
+    except (AttributeError, IndexError, ValueError):
         raise ValueError
 
 
