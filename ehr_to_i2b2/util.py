@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime
 from datetime import timedelta
 
@@ -31,8 +32,14 @@ def normalize_date(date):
 
 
 def parse_custom_date(date, months):
-    pass
-# TODO: Implement this !!!
+    matches = re.fullmatch("([0-3][0-9])-([a-zA-Z]{3})-([0-9][0-9])", date)
+    try:
+        day = int(matches.group(1)) + 1900
+        month = months.index(matches.group(2).lower()) + 1
+        year = int(matches.group(3))
+        return datetime(year, month, day)
+    except (IndexError, ValueError):
+        raise ValueError
 
 
 def normalize_sex(sex):
