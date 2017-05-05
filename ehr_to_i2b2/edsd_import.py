@@ -35,7 +35,7 @@ def process(input_folder, i2b2_conn, dataset):
         i2b2_conn.save_patient(patient_num, gender, birthdate)
 
         mri_date = util.normalize_date(row['mri_date'])
-        encounter_ide = _find_visit(i2b2_conn, patient_num, mri_date)
+        encounter_ide = _find_visit(i2b2_conn, patient_ide, mri_date)
         if encounter_ide:
             logging.info("-> found visit %s", encounter_ide)
 
@@ -96,15 +96,15 @@ def _save_observation(i2b2_conn, dataset, patient_num, encounter_num, shortname,
                                nval_num)
 
 
-def _find_visit(i2b2_conn, patient_num, mri_date):
+def _find_visit(i2b2_conn, patient_ide, mri_date):
     try:
-        return i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
-            filter_by(patient_num=patient_num).one_or_none()
+        return i2b2_conn.db_session.query(i2b2_conn.EncounterMapping.encounter_num).\
+            filter_by(patient_ide=patient_ide).one_or_none()
     except MultipleResultsFound:
         encounter_num = None
         if mri_date:
-            encounter_num = i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
-                filter_by(patient_num=patient_num, start_date=mri_date).first()
+            # TODO: try to get visit matching mri_date
+            pass
         if not encounter_num:
-            return i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).\
-                filter_by(patient_num=patient_num).first()
+            return i2b2_conn.db_session.query(i2b2_conn.EncounterMapping.encounter_num).\
+                filter_by(patient_ide=patient_ide).first()
