@@ -99,7 +99,7 @@ def _save_observation(i2b2_conn, dataset, patient_num, encounter_num, shortname,
 def _find_visit(i2b2_conn, patient_ide, mri_date):
     try:
         return i2b2_conn.db_session.query(i2b2_conn.EncounterMapping.encounter_num).\
-            filter_by(patient_ide=patient_ide).one_or_none()
+            filter_by(patient_ide=patient_ide).one_or_none()[0]
     except MultipleResultsFound:
         encounter_num = None
         if mri_date:
@@ -107,4 +107,4 @@ def _find_visit(i2b2_conn, patient_ide, mri_date):
             pass
         if not encounter_num:
             return i2b2_conn.db_session.query(i2b2_conn.EncounterMapping.encounter_num).\
-                filter_by(patient_ide=patient_ide).first()
+                filter_by(patient_ide=patient_ide).first()[0]
