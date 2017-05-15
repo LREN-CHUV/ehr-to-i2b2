@@ -35,7 +35,7 @@ def process(input_folder, i2b2_conn, dataset):
         i2b2_conn.save_patient(patient_num, gender, birthdate)
 
         mri_date = util.normalize_date(row['mri_date'])
-        encounter_num = _find_visit(i2b2_conn, patient_ide, mri_date)
+        encounter_num = _find_visit(i2b2_conn, patient_ide, dataset, dataset + ":MagneticFieldStrength")
         if encounter_num:
             logging.info("-> found visit %s", encounter_num)
 
@@ -95,19 +95,15 @@ def _save_observation(i2b2_conn, dataset, patient_num, encounter_num, shortname,
                                nval_num)
 
 
-def _find_visit(i2b2_conn, patient_ide, mri_date):
-    visit_res = None
+def _find_visit(i2b2_conn, patient_ide, dataset, mandatory_concept):
     try:
         visit_res = i2b2_conn.db_session.query(i2b2_conn.EncounterMapping.encounter_num).\
             filter_by(patient_ide=patient_ide).one_or_none()
     except MultipleResultsFound:
-        encounter_num = None
-        if mri_date:
-            # TODO: try to get visit matching mri_date
-            pass
-        if not encounter_num:
-            visit_res = i2b2_conn.db_session.query(i2b2_conn.EncounterMapping.encounter_num).\
-                filter_by(patient_ide=patient_ide).first()
+        patient_num = i2b2_conn.db_session.query(i2b2_conn.PatientMapping.patient_num). \
+            filter_by(patient_ide=patient_ide, project_id=dataset).one_or_none()
+        visit_res = i2b2_conn.db_session.query(i2b2_conn.ObservationFact.encounter_num).filter_by(
+            patient_num=patient_num, concept_cd=mandatory_concept).distinct().first()
     try:
         return visit_res[0]
     except TypeError:
