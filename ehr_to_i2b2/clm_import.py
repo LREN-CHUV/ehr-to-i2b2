@@ -27,9 +27,28 @@ def process(input_folder, i2b2_conn, dataset):
     import_morphobox(dataset, i2b2_conn, input_folder)
 
 
+def _format_value_name(row):
+    name_split = row['TEST_VALUE_NAME'].split('.')
+    name_prefix = name_split[0]
+    name = name_split[1].replace(' ', '')
+    if name_prefix == "STD":
+        return name
+    return "DISCARD"
+
+
+def _prepare_data(data):
+    data['TEST_VALUE_NAME'] = data.apply(lambda row: _format_value_name(row), axis=1)
+    data = data[data['TEST_VALUE_TYPE'] != "NOMINAL"]
+    data = data[data['TEST_VALUE_CODE'] != "DISCARD"]
+    return data
+
+
 def import_scores(dataset, i2b2_conn, input_folder):
-    for scores_path in iglob(os.path.join(input_folder, '**/Scores_*.xls'), recursive=True):
+    for scores_path in iglob(os.path.join(input_folder, '**/*Scores.xls'), recursive=True):
+        logging.info("Reading data from %s", scores_path)
         data = read_excel(scores_path)
+        data = _prepare_data(data)
+        # data.to_csv('/input_folder/temp.csv')
         for _, row in data.iterrows():
             encounter_num = i2b2_conn.get_encounter_num(
                 row['EVENT_ID'], dataset, dataset, row['SUBJECT_ID'], dataset)
@@ -37,9 +56,9 @@ def import_scores(dataset, i2b2_conn, input_folder):
             patient_age = util.compute_age(row['SUBJ_AGE_YEARS'], row['SUBJ_AGE_MONTHS'])
             i2b2_conn.save_patient(patient_num)
             i2b2_conn.save_visit(encounter_num, patient_num, patient_age=patient_age)
-            concept_shortname = row['TEST_CODE']
+            concept_shortname = row['TEST_VALUE_CODE']
             concept_cd = dataset + ":" + concept_shortname
-            name_char = row['TEST_NAME']
+            name_char = row['TEST_VALUE_NAME']
             concept_path = os.path.join("/", dataset, 'EHR', 'Scores', concept_shortname)
             i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
             val = row['TEST_VALUE']
@@ -56,7 +75,8 @@ def import_scores(dataset, i2b2_conn, input_folder):
 
 
 def import_events(dataset, i2b2_conn, input_folder):
-    for events_path in iglob(os.path.join(input_folder, '**/Events_*.xls'), recursive=True):
+    for events_path in iglob(os.path.join(input_folder, '**/*Events.xls'), recursive=True):
+        logging.info("Reading data from %s", events_path)
         data = read_excel(events_path)
         for _, row in data.iterrows():
             encounter_num = i2b2_conn.get_encounter_num(
@@ -68,7 +88,8 @@ def import_events(dataset, i2b2_conn, input_folder):
 
 
 def import_demographics(dataset, i2b2_conn, input_folder):
-    for demographics_path in iglob(os.path.join(input_folder, '**/Demographics_*.xls'), recursive=True):
+    for demographics_path in iglob(os.path.join(input_folder, '**/*Demographics.xls'), recursive=True):
+        logging.info("Reading data from %s", demographics_path)
         data = read_excel(demographics_path)
         for _, row in data.iterrows():
             subject_num = i2b2_conn.get_patient_num(row['SUBJECT_CODE'], dataset, dataset)
@@ -77,7 +98,8 @@ def import_demographics(dataset, i2b2_conn, input_folder):
 
 
 def import_diagcat(dataset, i2b2_conn, input_folder):
-    for diagcats_path in iglob(os.path.join(input_folder, '**/DiagCats_*.xls'), recursive=True):
+    for diagcats_path in iglob(os.path.join(input_folder, '**/*DiagCats.xls'), recursive=True):
+        logging.info("Reading data from %s", diagcats_path)
         data = read_excel(diagcats_path)
         concept_path = os.path.join("/", dataset, 'EHR', 'Diagnosis', 'Diag Category')
         concept_cd = dataset + ":diag_category"
@@ -105,7 +127,8 @@ def import_diagcat(dataset, i2b2_conn, input_folder):
 
 
 def import_icd10(dataset, i2b2_conn, input_folder):
-    for diagnostics_path in iglob(os.path.join(input_folder, '**/Diagnostics_*.xls'), recursive=True):
+    for diagnostics_path in iglob(os.path.join(input_folder, '**/*Diagnostics.xls'), recursive=True):
+        logging.info("Reading data from %s", diagnostics_path)
         data = read_excel(diagnostics_path)
         for _, row in data.iterrows():
             encounter_ide = row['ID_EVENT']
