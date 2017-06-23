@@ -28,18 +28,33 @@ def process(input_folder, i2b2_conn, dataset):
 
 
 def _format_value_name(row):
-    name_split = row['TEST_VALUE_NAME'].split('.')
-    name_prefix = name_split[0]
-    name = name_split[1].replace(' ', '')
-    if name_prefix == "STD":
+    try:
+        name_split = row['TEST_VALUE_NAME'].split('.')
+        name_prefix = name_split[0]
+        name = name_split[1].split(':')[0].strip().replace(' ', '_')
+        score_type = row['TEST_VALUE_NAME'].split(':')[1].strip()
+        if name_prefix == "STD" and score_type == "value":
+            return name
+    except IndexError:
+        pass
+    return "DISCARD"
+
+
+def _format_value_code(row):
+    name_split = row['TEST_VALUE_CODE'].split(':')
+    name = name_split[0].strip().replace(' ', '_')
+    score_type = name_split[1].strip()
+    if score_type == "value":
         return name
     return "DISCARD"
 
 
 def _prepare_data(data):
-    data['TEST_VALUE_NAME'] = data.apply(lambda row: _format_value_name(row), axis=1)
     data = data[data['TEST_VALUE_TYPE'] != "NOMINAL"]
+    data['TEST_VALUE_CODE'] = data.apply(lambda row: _format_value_code(row), axis=1)
+    data['TEST_VALUE_NAME'] = data.apply(lambda row: _format_value_name(row), axis=1)
     data = data[data['TEST_VALUE_CODE'] != "DISCARD"]
+    data = data[data['TEST_VALUE_NAME'] != "DISCARD"]
     return data
 
 
