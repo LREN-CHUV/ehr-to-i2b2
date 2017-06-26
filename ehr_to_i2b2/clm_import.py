@@ -3,6 +3,7 @@ import os
 
 from glob import iglob
 from pandas import read_excel
+from re import sub
 
 from . import util
 
@@ -25,6 +26,9 @@ def process(input_folder, i2b2_conn, dataset):
 
     logging.info("Importing morphobox...")
     import_morphobox(dataset, i2b2_conn, input_folder)
+
+    logging.info("Importing LCR...")
+    import_lcr(dataset, i2b2_conn, input_folder)
 
 
 def _format_value_name(row):
@@ -162,3 +166,36 @@ def import_icd10(dataset, i2b2_conn, input_folder):
 def import_morphobox(dataset, i2b2_conn, input_folder):
     logging.info("Not implemented yet...")
     # TODO: implement it
+
+
+def import_lcr(dataset, i2b2_conn, input_folder):
+    for lcr_path in iglob(os.path.join(input_folder, '**/*LCR.xls'), recursive=True):
+        logging.info("Reading data from %s", lcr_path)
+        data = read_excel(lcr_path)
+        concept_path = os.path.join("/", dataset, 'EHR', 'Lab', 'LCR')
+        concept_cd = dataset + ":lcr"
+        name_char = "LCR"
+        i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
+        for _, row in data.iterrows():
+            encounter_num = i2b2_conn.get_encounter_num(
+                row['EVENT_ID'], dataset, dataset, row['SUBJECT_ID'], dataset)
+            patient_num = i2b2_conn.get_patient_num(row['SUBJECT_ID'], dataset, dataset)
+            patient_age = util.compute_age(row['SUBJ_AGE_YEARS'], row['SUBJ_AGE_MONTHS'])
+            i2b2_conn.save_patient(patient_num)
+            i2b2_conn.save_visit(encounter_num, patient_num, patient_age=patient_age)
+            concept_shortname = row['LVALUE_CODE'].split(':')[1]
+            concept_cd = dataset + ":" + concept_shortname
+            name_char = sub(' +', ' ', row['LVALUE_NAME'].split('.')[1])
+            concept_path = os.path.join("/", dataset, 'EHR', 'Scores', concept_shortname)
+            i2b2_conn.save_concept(concept_path, concept_cd=concept_cd, concept_fullname=name_char)
+            val = row['LVALUE']
+            valtype_cd = util.find_type(val)
+            if valtype_cd == 'N':
+                tval_char = 'E'
+                nval_num = float(val)
+            else:
+                tval_char = val
+                nval_num = None
+            start_date = util.DEFAULT_DATE
+            i2b2_conn.save_observation(
+                encounter_num, concept_cd, dataset, start_date, patient_num, valtype_cd, tval_char, nval_num)
