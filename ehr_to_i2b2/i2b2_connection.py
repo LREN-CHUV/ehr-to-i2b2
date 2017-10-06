@@ -152,11 +152,11 @@ class Connection:
             self.db_session.add(concept)
             self.db_session.commit()
         else:
-            if concept_cd not in [None,  '', concept.concept_cd]:
+            if concept_cd not in [None, '', concept.concept_cd]:
                 concept.concept_cd = concept_cd
                 concept.update_date = datetime.now()
                 self.db_session.commit()
-            if concept_fullname not in [None,  '', concept.name_char]:
+            if concept_fullname not in [None, '', concept.name_char]:
                 concept.name_char = concept_fullname
                 concept.update_date = datetime.now()
                 self.db_session.commit()
