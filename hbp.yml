@@ -1,0 +1,71 @@
+name: ehr-to-i2b2
+description: "Import EHR (electronic health record) data into an I2B2 database"
+
+long_description: |
+  Docker container that imports EHR (electronic health record) data into an I2B2 database.
+
+
+authors:
+  - author: Mirco Nasuti
+    author_email:
+      - mirco.nasuti@chuv.ch
+    organisation: LREN-CHUV
+    organisation_badge: https://img.shields.io/badge/CHUV-LREN-AF4C64.svg
+
+platform: MIP
+component:
+  mip_building_block: data-factory
+  nature: pipeline
+
+license:
+  name: Apache 2.0
+  badge: https://img.shields.io/badge/license-Apache--2.0-blue.svg
+  url: https://github.com/LREN-CHUV/ehr-to-i2b2/blob/master/LICENSE
+
+code_repositories:
+  - name: chuv-gitlab
+    visibility: private
+    url: https://___.chuv.ch/data-factory/ehr-to-i2b2/
+    git_clone: https://___.chuv.ch/data-factory/ehr-to-i2b2.git
+  - name: github/LREN-CHUV
+    visibility: public
+    url: https://github.io/LREN-CHUV/ehr-to-i2b2/
+    git_clone: https://github.io/LREN-CHUV/ehr-to-i2b2.git
+  - name: github/HBPMedical
+    visibility: public
+    url: https://github.io/HBPMedical/ehr-to-i2b2/
+    git_clone: https://github.io/HBPMedical/ehr-to-i2b2.git
+
+code_quality_checks:
+  codacy:
+    badge: https://api.codacy.com/project/badge/Grade/6bfdbda51c0d41b1bf8de81ceeed5ca5
+    url: "https://www.codacy.com/app/hbp-mip/ehr-to-i2b2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=LREN-CHUV/ehr-to-i2b2&amp;utm_campaign=Badge_Grade"
+
+testing: []
+
+release_management:
+  current_version: 0.1.7
+  current_code_release: https://github.com/HBPMedical/ehr-to-i2b2/archive/0.1.7.zip
+  current_docker_release: docker pull hbpmip/ehr-to-i2b2:0.1.7
+  release_script: 'publish.sh'
+
+continuous_integration: []
+
+distribution:
+  docker_hub:
+    name: hbpmip/ehr-to-i2b2
+    current_tag: 0.1.7
+    url: https://hub.docker.com/r/hbpmip/ehr-to-i2b2/
+    badge: https://img.shields.io/badge/docker-hbpmip%2Fehr-to-i2b2-008bb8.svg
+    command: docker pull hbpmip/ehr-to-i2b2:0.1.7
+
+planning:
+  github:
+    name: Issues on Github
+    url: https://github.com/LREN-CHUV/ehr-to-i2b2/issues
+
+related_projects:
+  - name: data-factory-airflow-dags
+    mip_building_block: data-factory
+    relationship: other-depends-on
+    relationship_scope: runtime

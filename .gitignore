@@ -45,3 +45,5 @@ ENV/
 
 .ropeproject
 
+.slack.json
+

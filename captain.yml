@@ -1,4 +1,4 @@
-ehr-to-i2b2:
+target_image:
   build: Dockerfile
   image: hbpmip/ehr-to-i2b2
   pre:
