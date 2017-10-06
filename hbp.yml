@@ -49,7 +49,14 @@ release_management:
   current_docker_release: docker pull hbpmip/ehr-to-i2b2:0.2.0
   release_script: 'publish.sh'
 
-continuous_integration: []
+continuous_integration:
+  - name: CircleCI
+    description: "Check style and execute unit tests"
+    url: https://circleci.com/gh/LREN-CHUV/ehr-to-i2b2
+    badge: https://circleci.com/gh/LREN-CHUV/ehr-to-i2b2.svg?style=svg
+    actions:
+      - code_style
+      - unit_tests
 
 distribution:
   docker_hub:

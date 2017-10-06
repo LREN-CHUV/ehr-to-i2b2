@@ -2,6 +2,10 @@ FROM hbpmip/python-base:0.2.0
 
 MAINTAINER mirco.nasuti@chuv.ch
 
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+
 COPY ehr_to_i2b2/ /ehr_to_i2b2/
 COPY requirements.txt /requirements.txt
 
