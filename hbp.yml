@@ -44,9 +44,9 @@ code_quality_checks:
 testing: []
 
 release_management:
-  current_version: 0.1.7
-  current_code_release: https://github.com/HBPMedical/ehr-to-i2b2/archive/0.1.7.zip
-  current_docker_release: docker pull hbpmip/ehr-to-i2b2:0.1.7
+  current_version: 0.2.0
+  current_code_release: https://github.com/HBPMedical/ehr-to-i2b2/archive/0.2.0.zip
+  current_docker_release: docker pull hbpmip/ehr-to-i2b2:0.2.0
   release_script: 'publish.sh'
 
 continuous_integration: []
@@ -54,10 +54,10 @@ continuous_integration: []
 distribution:
   docker_hub:
     name: hbpmip/ehr-to-i2b2
-    current_tag: 0.1.7
+    current_tag: 0.2.0
     url: https://hub.docker.com/r/hbpmip/ehr-to-i2b2/
     badge: https://img.shields.io/badge/docker-hbpmip%2Fehr-to-i2b2-008bb8.svg
-    command: docker pull hbpmip/ehr-to-i2b2:0.1.7
+    command: docker pull hbpmip/ehr-to-i2b2:0.2.0
 
 planning:
   github:
