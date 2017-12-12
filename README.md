@@ -10,3 +10,9 @@ This is a tool to import EHR (electronic health record) data into an I2B2 databa
 
 Run:
 `docker run --rm -v <ehr_folder>:/input_folder hbpmip/ehr-to-i2b2:0.2.0 <db_url> <dataset>`
+
+# Acknowledgements
+
+This work has been funded by the European Union Seventh Framework Program (FP7/2007­2013) under grant agreement no. 604102 (HBP)
+
+This work is part of SP8 of the Human Brain Project (SGA1).
